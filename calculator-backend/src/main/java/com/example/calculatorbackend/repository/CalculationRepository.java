@@ -8,5 +8,6 @@ import java.util.List;
 
 @Repository
 public interface CalculationRepository extends JpaRepository<CalculationHistory, Long> {
-    List<CalculationHistory> findTop10ByOrderByCreatedAtDesc();
+    // Top 50 history taake zyada data dikh sake
+    List<CalculationHistory> findTop50ByOrderByCreatedAtDesc();
 }
