@@ -2,7 +2,7 @@
 // PROFESSIONAL CALCULATOR - FULL FEATURED
 // ============================================
 
-const API_URL = 'http://localhost:8080/api/calculator';
+const API_URL = 'https://calculator-app-wfct.onrender.com/api/calculator'; // APNA RENDER URL YAHAN DALEIN
 
 // ===== STATE =====
 let currentInput = '0';
@@ -10,7 +10,6 @@ let previousInput = '';
 let currentOperation = null;
 let waitingForOperand = false;
 let lastResult = null;
-let currentMode = 'basic';
 let soundEnabled = true;
 let favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
 let allHistory = [];
@@ -29,7 +28,7 @@ const copyBtn = document.getElementById('copyBtn');
 const searchInput = document.getElementById('searchInput');
 const toastEl = document.getElementById('toast');
 
-// ===== TOAST NOTIFICATION =====
+// ===== TOAST =====
 function showToast(message, isError = false) {
     toastEl.textContent = message;
     toastEl.classList.toggle('error', isError);
@@ -58,14 +57,12 @@ function playClick() {
 // ===== DISPLAY =====
 function updateDisplay() {
     resultEl.textContent = formatNumber(currentInput);
-
     if (currentOperation && previousInput) {
         const symbols = { add: '+', subtract: '−', multiply: '×', divide: '÷' };
         expressionEl.textContent = `${formatNumber(previousInput)} ${symbols[currentOperation]}`;
     } else {
         expressionEl.textContent = '';
     }
-
     saveBtn.disabled = lastResult === null;
     favoriteBtn.disabled = lastResult === null;
 }
@@ -81,7 +78,7 @@ function formatNumber(num) {
     return str;
 }
 
-// ===== NUMBER INPUT =====
+// ===== INPUT =====
 function inputNumber(num) {
     playClick();
     if (waitingForOperand) {
@@ -116,7 +113,6 @@ function inputOperation(op) {
     } else {
         previousInput = currentInput;
     }
-
     waitingForOperand = true;
     currentOperation = op;
     lastResult = null;
@@ -167,7 +163,7 @@ function handleEquals() {
     updateDisplay();
 }
 
-// ===== CLEAR =====
+// ===== CLEAR & BACKSPACE =====
 function clearAll() {
     playClick();
     currentInput = '0';
@@ -179,7 +175,6 @@ function clearAll() {
     updateDisplay();
 }
 
-// ===== BACKSPACE =====
 function backspace() {
     playClick();
     if (waitingForOperand) return;
@@ -188,7 +183,7 @@ function backspace() {
     updateDisplay();
 }
 
-// ===== PERCENT =====
+// ===== PERCENT & SIGN =====
 function percent() {
     playClick();
     const num = parseFloat(currentInput);
@@ -197,7 +192,6 @@ function percent() {
     updateDisplay();
 }
 
-// ===== SIGN TOGGLE =====
 function toggleSign() {
     playClick();
     if (currentInput === '0') return;
@@ -206,93 +200,36 @@ function toggleSign() {
     updateDisplay();
 }
 
-// ===== SCIENTIFIC FUNCTIONS =====
-function sqrt() {
+// ===== SCIENTIFIC (Call API) =====
+async function callScientificAPI(op) {
     playClick();
     const num = parseFloat(currentInput);
-    if (num < 0) { showError('Cannot sqrt negative'); return; }
-    currentInput = String(Math.round(Math.sqrt(num) * 1e10) / 1e10);
-    updateDisplay();
+    if (isNaN(num)) return;
+    
+    try {
+        const response = await fetch(`${API_URL}/calculate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ firstNumber: num, secondNumber: 0, operation: op })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || 'Calculation failed');
+        }
+
+        const data = await response.json();
+        currentInput = String(data.result);
+        lastResult = { firstNumber: num, secondNumber: 0, operation: op, result: data.result };
+        updateDisplay();
+        loadHistory();
+    } catch (err) {
+        showError(err.message || 'Connection error');
+    }
 }
 
-function power() {
-    playClick();
-    const num = parseFloat(currentInput);
-    currentInput = String(num * num);
-    updateDisplay();
-}
-
-function reciprocal() {
-    playClick();
-    const num = parseFloat(currentInput);
-    if (num === 0) { showError('Cannot divide by zero'); return; }
-    currentInput = String(Math.round((1 / num) * 1e10) / 1e10);
-    updateDisplay();
-}
-
-function factorial() {
-    playClick();
-    const num = parseInt(currentInput);
-    if (num < 0) { showError('Invalid input'); return; }
-    if (num > 170) { showError('Number too large'); return; }
-    let result = 1;
-    for (let i = 2; i <= num; i++) result *= i;
-    currentInput = String(result);
-    updateDisplay();
-}
-
-function sin() {
-    playClick();
-    currentInput = String(Math.round(Math.sin(parseFloat(currentInput)) * 1e10) / 1e10);
-    updateDisplay();
-}
-
-function cos() {
-    playClick();
-    currentInput = String(Math.round(Math.cos(parseFloat(currentInput)) * 1e10) / 1e10);
-    updateDisplay();
-}
-
-function tan() {
-    playClick();
-    currentInput = String(Math.round(Math.tan(parseFloat(currentInput)) * 1e10) / 1e10);
-    updateDisplay();
-}
-
-function log() {
-    playClick();
-    const num = parseFloat(currentInput);
-    if (num <= 0) { showError('Invalid input'); return; }
-    currentInput = String(Math.round(Math.log10(num) * 1e10) / 1e10);
-    updateDisplay();
-}
-
-function ln() {
-    playClick();
-    const num = parseFloat(currentInput);
-    if (num <= 0) { showError('Invalid input'); return; }
-    currentInput = String(Math.round(Math.log(num) * 1e10) / 1e10);
-    updateDisplay();
-}
-
-function pi() {
-    playClick();
-    currentInput = String(Math.PI);
-    updateDisplay();
-}
-
-function e() {
-    playClick();
-    currentInput = String(Math.E);
-    updateDisplay();
-}
-
-function exp() {
-    playClick();
-    const num = parseFloat(currentInput);
-    currentInput = String(Math.round(Math.exp(num) * 1e10) / 1e10);
-    updateDisplay();
-}
+function pi() { playClick(); currentInput = String(Math.PI); waitingForOperand = false; updateDisplay(); }
+function e() { playClick(); currentInput = String(Math.E); waitingForOperand = false; updateDisplay(); }
 
 // ===== ERROR =====
 function showError(msg) {
@@ -306,10 +243,9 @@ function showError(msg) {
     }, 1500);
 }
 
-// ===== SAVE TO HISTORY =====
+// ===== API CALLS =====
 async function saveToHistory() {
     if (!lastResult) return;
-
     saveBtn.disabled = true;
     saveBtn.textContent = '💾 Saving...';
 
@@ -325,17 +261,14 @@ async function saveToHistory() {
         saveBtn.textContent = '✅ Saved!';
         saveBtn.classList.add('saved');
         showToast('Saved to history!');
-
         setTimeout(() => {
             saveBtn.textContent = '💾 Save to History';
             saveBtn.classList.remove('saved');
         }, 1500);
-
         loadHistory();
     } catch (err) {
         saveBtn.textContent = '❌ Failed';
         showToast('Failed to save', true);
-        console.error(err);
         setTimeout(() => {
             saveBtn.textContent = '💾 Save to History';
             saveBtn.disabled = false;
@@ -343,7 +276,6 @@ async function saveToHistory() {
     }
 }
 
-// ===== LOAD HISTORY =====
 async function loadHistory() {
     try {
         const response = await fetch(`${API_URL}/history`);
@@ -358,7 +290,6 @@ async function loadHistory() {
 
 function renderHistory(history) {
     historyList.innerHTML = '';
-
     if (history.length === 0) {
         historyList.innerHTML = '<li class="empty-state">No calculations yet</li>';
         return;
@@ -366,7 +297,8 @@ function renderHistory(history) {
 
     const symbols = {
         add: '+', subtract: '−', multiply: '×', divide: '÷',
-        sqrt: '√', power: '²', reciprocal: '1/', percent: '%'
+        sqrt: '√', power: '^', reciprocal: '1/', percent: '%',
+        sin: 'sin', cos: 'cos', tan: 'tan', log: 'log', ln: 'ln', exp: 'e^'
     };
 
     history.forEach(item => {
@@ -380,11 +312,14 @@ function renderHistory(history) {
         if (isFav) li.classList.add('favorite');
 
         let expression;
-        if (['sqrt', 'power', 'reciprocal', 'percent'].includes(item.operation)) {
-            if (item.operation === 'sqrt') expression = `√${firstStr}`;
-            else if (item.operation === 'power') expression = `${firstStr}²`;
-            else if (item.operation === 'reciprocal') expression = `1/${firstStr}`;
-            else if (item.operation === 'percent') expression = `${firstStr}%`;
+        if (['sqrt', 'sin', 'cos', 'tan', 'log', 'ln', 'exp', 'reciprocal'].includes(item.operation)) {
+            expression = `${symbol}(${firstStr})`;
+        } else if (item.operation === 'factorial') {
+            expression = `${firstStr}!`;
+        } else if (item.operation === 'power') {
+            expression = `${firstStr} ^ ${secondStr}`;
+        } else if (item.operation === 'percent') {
+            expression = `${firstStr}%`;
         } else {
             expression = `${firstStr} ${symbol} ${secondStr}`;
         }
@@ -404,19 +339,15 @@ function renderHistory(history) {
     });
 }
 
-// ===== STATS =====
 function updateStats() {
     document.getElementById('totalCount').textContent = allHistory.length;
     document.getElementById('favoritesCount').textContent = favorites.length;
-
     const today = new Date().toDateString();
-    const todayCount = allHistory.filter(h => {
-        return new Date(h.createdAt).toDateString() === today;
-    }).length;
+    const todayCount = allHistory.filter(h => new Date(h.createdAt).toDateString() === today).length;
     document.getElementById('todayCount').textContent = todayCount;
 }
 
-// ===== FAVORITE =====
+// ===== FAVORITE & CLEAR =====
 function toggleFavorite() {
     if (!lastResult) return;
     const id = lastResult.id;
@@ -434,10 +365,8 @@ function toggleFavorite() {
     loadHistory();
 }
 
-// ===== CLEAR HISTORY =====
 async function clearHistory() {
     if (!confirm('Clear all history? This cannot be undone.')) return;
-
     try {
         await fetch(`${API_URL}/history`, { method: 'DELETE' });
         favorites = [];
@@ -449,7 +378,7 @@ async function clearHistory() {
     }
 }
 
-// ===== COPY RESULT =====
+// ===== COPY & EXPORT =====
 function copyResult() {
     navigator.clipboard.writeText(currentInput).then(() => {
         showToast('Copied!');
@@ -458,18 +387,12 @@ function copyResult() {
     });
 }
 
-// ===== EXPORT CSV =====
 function exportCSV() {
-    if (allHistory.length === 0) {
-        showToast('No history to export', true);
-        return;
-    }
-
+    if (allHistory.length === 0) return showToast('No history to export', true);
     let csv = 'ID,First Number,Second Number,Operation,Result,Date\n';
     allHistory.forEach(item => {
         csv += `${item.id},${item.firstNumber},${item.secondNumber},${item.operation},${item.result},${item.createdAt}\n`;
     });
-
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -483,11 +406,7 @@ function exportCSV() {
 // ===== SEARCH =====
 function searchHistory() {
     const query = searchInput.value.toLowerCase().trim();
-    if (!query) {
-        renderHistory(allHistory);
-        return;
-    }
-
+    if (!query) return renderHistory(allHistory);
     const filtered = allHistory.filter(item => {
         const text = `${item.firstNumber} ${item.operation} ${item.secondNumber} ${item.result}`.toLowerCase();
         return text.includes(query);
@@ -495,7 +414,7 @@ function searchHistory() {
     renderHistory(filtered);
 }
 
-// ===== THEME TOGGLE =====
+// ===== THEME & SOUND =====
 function toggleTheme() {
     document.body.classList.toggle('light-mode');
     const isLight = document.body.classList.contains('light-mode');
@@ -503,7 +422,6 @@ function toggleTheme() {
     localStorage.setItem('theme', isLight ? 'light' : 'dark');
 }
 
-// ===== SOUND TOGGLE =====
 function toggleSound() {
     soundEnabled = !soundEnabled;
     soundToggle.textContent = soundEnabled ? '🔊' : '🔇';
@@ -512,7 +430,6 @@ function toggleSound() {
 
 // ===== MODE SWITCHING =====
 function switchMode(mode) {
-    currentMode = mode;
     document.querySelectorAll('.mode-tab').forEach(t => {
         t.classList.toggle('active', t.dataset.mode === mode);
     });
@@ -521,8 +438,6 @@ function switchMode(mode) {
 }
 
 // ===== EVENT LISTENERS =====
-
-// Number/Operation buttons
 document.querySelectorAll('.btn').forEach(btn => {
     btn.addEventListener('click', () => {
         const num = btn.dataset.num;
@@ -539,32 +454,30 @@ document.querySelectorAll('.btn').forEach(btn => {
                 case 'sign': toggleSign(); break;
                 case 'decimal': inputDecimal(); break;
                 case 'equals': handleEquals(); break;
-                case 'sqrt': sqrt(); break;
-                case 'power': power(); break;
-                case 'reciprocal': reciprocal(); break;
-                case 'factorial': factorial(); break;
-                case 'sin': sin(); break;
-                case 'cos': cos(); break;
-                case 'tan': tan(); break;
-                case 'log': log(); break;
-                case 'ln': ln(); break;
+                // Scientific actions call backend
+                case 'sqrt': callScientificAPI('sqrt'); break;
+                case 'power': callScientificAPI('power'); break;
+                case 'reciprocal': callScientificAPI('reciprocal'); break;
+                case 'factorial': callScientificAPI('factorial'); break;
+                case 'sin': callScientificAPI('sin'); break;
+                case 'cos': callScientificAPI('cos'); break;
+                case 'tan': callScientificAPI('tan'); break;
+                case 'log': callScientificAPI('log'); break;
+                case 'ln': callScientificAPI('ln'); break;
+                case 'exp': callScientificAPI('exp'); break;
                 case 'pi': pi(); break;
                 case 'e': e(); break;
-                case 'exp': exp(); break;
             }
         }
-
         btn.classList.add('ripple');
         setTimeout(() => btn.classList.remove('ripple'), 500);
     });
 });
 
-// Mode tabs
 document.querySelectorAll('.mode-tab').forEach(tab => {
     tab.addEventListener('click', () => switchMode(tab.dataset.mode));
 });
 
-// Top actions
 themeToggle.addEventListener('click', toggleTheme);
 soundToggle.addEventListener('click', toggleSound);
 exportBtn.addEventListener('click', exportCSV);
@@ -577,7 +490,6 @@ searchInput.addEventListener('input', searchHistory);
 // Keyboard support
 document.addEventListener('keydown', (e) => {
     const key = e.key;
-
     if (/^[0-9]$/.test(key)) { e.preventDefault(); inputNumber(key); }
     else if (key === '.') { e.preventDefault(); inputDecimal(); }
     else if (key === '+') { e.preventDefault(); inputOperation('add'); }
@@ -590,20 +502,16 @@ document.addEventListener('keydown', (e) => {
     else if (key === '%') { e.preventDefault(); percent(); }
 });
 
-// ===== INITIAL LOAD =====
+// Initial Load
 document.addEventListener('DOMContentLoaded', () => {
-    // Load saved theme
     if (localStorage.getItem('theme') === 'light') {
         document.body.classList.add('light-mode');
         themeToggle.textContent = '☀️';
     }
-
-    // Load saved sound
     if (localStorage.getItem('sound') === 'false') {
         soundEnabled = false;
         soundToggle.textContent = '🔇';
     }
-
     updateDisplay();
     loadHistory();
 });

@@ -25,14 +25,12 @@
         <div class="main-grid">
             <!-- Calculator -->
             <div class="calculator-wrapper">
-                <!-- Tabs for modes -->
                 <div class="mode-tabs">
                     <button class="mode-tab active" data-mode="basic">Basic</button>
                     <button class="mode-tab" data-mode="scientific">Scientific</button>
                 </div>
 
                 <div class="calculator">
-                    <!-- Display -->
                     <div class="display-section">
                         <div class="display-top">
                             <div class="expression" id="expression"></div>
@@ -47,22 +45,18 @@
                         <button class="btn btn-func" data-action="backspace">⌫</button>
                         <button class="btn btn-func" data-action="percent">%</button>
                         <button class="btn btn-op" data-op="divide">÷</button>
-
                         <button class="btn btn-num" data-num="7">7</button>
                         <button class="btn btn-num" data-num="8">8</button>
                         <button class="btn btn-num" data-num="9">9</button>
                         <button class="btn btn-op" data-op="multiply">×</button>
-
                         <button class="btn btn-num" data-num="4">4</button>
                         <button class="btn btn-num" data-num="5">5</button>
                         <button class="btn btn-num" data-num="6">6</button>
                         <button class="btn btn-op" data-op="subtract">−</button>
-
                         <button class="btn btn-num" data-num="1">1</button>
                         <button class="btn btn-num" data-num="2">2</button>
                         <button class="btn btn-num" data-num="3">3</button>
                         <button class="btn btn-op" data-op="add">+</button>
-
                         <button class="btn btn-func" data-action="sign">±</button>
                         <button class="btn btn-num" data-num="0">0</button>
                         <button class="btn btn-num" data-action="decimal">.</button>
@@ -75,19 +69,16 @@
                         <button class="btn btn-sci" data-action="power">x²</button>
                         <button class="btn btn-sci" data-action="reciprocal">1/x</button>
                         <button class="btn btn-sci" data-action="factorial">n!</button>
-
                         <button class="btn btn-sci" data-action="sin">sin</button>
                         <button class="btn btn-sci" data-action="cos">cos</button>
                         <button class="btn btn-sci" data-action="tan">tan</button>
                         <button class="btn btn-sci" data-action="pi">π</button>
-
                         <button class="btn btn-sci" data-action="log">log</button>
                         <button class="btn btn-sci" data-action="ln">ln</button>
                         <button class="btn btn-sci" data-action="e">e</button>
                         <button class="btn btn-sci" data-action="exp">eˣ</button>
                     </div>
 
-                    <!-- Action Bar -->
                     <div class="action-bar">
                         <button class="save-btn" id="saveBtn" disabled>💾 Save to History</button>
                         <button class="favorite-btn" id="favoriteBtn" title="Add to Favorites">⭐</button>
@@ -97,7 +88,6 @@
 
             <!-- Right Panel: History + Stats -->
             <div class="side-panel">
-                <!-- Stats -->
                 <div class="stats-card">
                     <div class="stat-item">
                         <div class="stat-value" id="totalCount">0</div>
@@ -113,12 +103,10 @@
                     </div>
                 </div>
 
-                <!-- Search -->
                 <div class="search-box">
                     <input type="text" id="searchInput" placeholder="🔍 Search history...">
                 </div>
 
-                <!-- History -->
                 <div class="history-panel">
                     <div class="history-header">
                         <h2>📜 History</h2>
@@ -132,9 +120,7 @@
         </div>
     </div>
 
-    <!-- Toast Notification -->
     <div class="toast" id="toast"></div>
-
     <script src="script.js"></script>
 </body>
 </html>
